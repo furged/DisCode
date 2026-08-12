@@ -2,6 +2,7 @@ import sys
 from walker import walk_repo
 from chunker import chunk_file
 from embedder import embed_chunks
+from storage import get_connection, init_db, save_chunks
 
 
 def main():
@@ -22,8 +23,12 @@ def main():
     print(f"Extracted {len(all_chunks)} code chunks")
 
     embedded_chunks = embed_chunks(all_chunks)
-
     print(f"Embedded {len(embedded_chunks)} chunks successfully")
+
+    conn = get_connection("codebase.db")
+    init_db(conn)
+    save_chunks(conn, embedded_chunks)
+    print(f"Saved {len(embedded_chunks)} chunks to codebase.db")
 
 
 if __name__ == "__main__":
