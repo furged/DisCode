@@ -11,11 +11,14 @@ def main():
     question = sys.argv[1]
     conn = get_connection("codebase.db")
 
-    results = retrieve(conn, question, top_k=3)
+    outcome = retrieve(conn, question, top_k=3)
 
-    print(f"\nQuestion: {question}\n")
-    print("Top matching code:\n")
-    for r in results:
+    print(f"\nQuestion: {question}")
+    if outcome["was_corrected"]:
+        print(f"(Initial search was weak - retried with: \"{outcome['final_query']}\")")
+    print()
+
+    for r in outcome["results"]:
         print(f"[{r['type']}] {r['name']}  ({r['file_path']}, lines {r['start_line']}-{r['end_line']})")
         print(f"   distance: {r['distance']:.3f}")
         print()
