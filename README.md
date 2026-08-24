@@ -1,142 +1,117 @@
+# DisCode
 
-## Current Status
+Semantic codebase search engine. Ask questions about your code in plain English, get real answers grounded in your actual codebase.
 
-**✅ Complete:**
-- Full indexing pipeline (walk repo → parse code → chunk by functions/classes)
-- Embedding system (Gemini API integration)
+## What it does
+
+Input: "How does the ball speed increase in this game?"
+Output: The actual code functions that implement that behavior, ranked by relevance to your question.
+
+DisCode uses RAG (Retrieval-Augmented Generation) to search codebases by meaning, not keywords. Instead of an AI guessing from general knowledge, it finds real code chunks from your repo first, then explains based on that evidence. It automatically retries weak searches with rewritten queries instead of answering with low-confidence results.
+
+## How it works
+
+1. Walker — finds real source files, skips junk (node_modules, build artifacts, etc.)
+2. Chunker — parses code using tree-sitter, breaks it into whole functions/classes
+3. Embedder — converts each chunk to a vector (list of numbers representing meaning)
+4. Storage — saves chunks and vectors to SQLite database
+5. Retriever — takes user questions, embeds them, searches for closest-meaning chunks
+6. Self-correction — checks if results are weak, retries with better query if needed
+7. API — FastAPI backend exposing search as HTTP endpoints
+8. MCP Server — same logic exposed as tools for Claude Desktop / other AI apps
+
+## Status
+
+Completed:
+- Indexing pipeline (walk, chunk, embed)
 - Vector storage (SQLite + sqlite-vec)
-- Semantic search + self-correction (detects weak results, rewrites query, retries)
-- MCP server (Claude Desktop / other tools can call it)
-- Backend API (FastAPI, HTTP endpoints for web frontend)
+- Semantic search with self-correction
+- MCP server
+- Backend API
 
-**🚧 In Progress:**
-- Frontend web app (chat UI, dark/terminal aesthetic)
+In progress:
+- Frontend web app
 
-**📋 Planned:**
-- Multi-language support (currently JS/TS only)
-- Final evaluation & report
+## Setup
 
-## Quick Start
-
-### Prerequisites
-- Python 3.12
-- Gemini API key (free tier available at https://aistudio.google.com/)
-
-### Setup
+Prerequisites: Python 3.12, Gemini API key (free at https://aistudio.google.com/)
 
 ```bash
-# Create venv
 python3.12 -m venv venv
-source venv/bin/activate  # or venv\Scripts\Activate.ps1 on Windows
-
-# Install dependencies
+source venv/bin/activate
 pip install -r requirements.txt
-
-# Create .env with your API key
 echo "GEMINI_API_KEY=your_key_here" > .env
 ```
 
-### Index a Codebase
+## Usage
 
+Index a repo:
 ```bash
-python indexer/run.py /path/to/your/repo
+python indexer/run.py /path/to/repo
 ```
 
-This walks the repo, chunks it, embeds every chunk, and saves to `codebase.db`.
-
-### Ask Questions (CLI)
-
+Ask questions from CLI:
 ```bash
-python indexer/ask.py "how does the ball move"
+python indexer/ask.py "how does the paddle move"
 ```
 
-Returns the top 3 most relevant code chunks with distances (lower = more relevant).
-
-### Use the Backend API
-
+Run the backend API:
 ```bash
-# In one terminal, start the server
 python indexer/api.py
+# Runs on localhost:8000
+```
 
-# In another, query it
+Query the API:
+```bash
 curl -X POST http://localhost:8000/api/search \
   -H "Content-Type: application/json" \
-  -d '{"question": "how does the paddle movement work"}'
+  -d '{"question": "how does collision detection work"}'
 ```
-
-### Use with Claude Desktop (MCP)
-
-The MCP server exposes `search_codebase` as a tool. Configure it in Claude Desktop to let Claude search your indexed repos automatically mid-conversation.
 
 ## Architecture
 
-**Core Layers:**
-- **`indexer/walker.py`** — File discovery (skips junk, finds real code)
-- **`indexer/chunker.py`** — Code parsing via tree-sitter (AST-aware chunking)
-- **`indexer/embedder.py`** — Turns code chunks into semantic vectors
-- **`indexer/storage.py`** — SQLite + sqlite-vec (stores chunks + embeddings, enables fast similarity search)
-- **`indexer/retriever.py`** — Semantic search with self-correction (detects weak results, auto-rewrites queries)
-- **`indexer/server.py`** — MCP server (exposes retrieval as tools)
-- **`indexer/api.py`** — FastAPI backend (HTTP interface for web frontend)
+Core files:
+- walker.py — finds code files worth indexing
+- chunker.py — uses tree-sitter to parse and chunk by function/class
+- embedder.py — calls Gemini API to convert chunks to vectors
+- storage.py — SQLite database with vector search extension
+- retriever.py — semantic search with auto-retry on weak results
+- server.py — MCP server exposing search_codebase tool
+- api.py — FastAPI backend with /api/search endpoint
 
-**Why this design:**
-- **No local model inference** — all AI work is API calls (learned from earlier project that crashed on 4GB laptop)
-- **Code-aware chunking** — functions/classes stay whole, never half-cut, preserving meaning
-- **Self-correcting retrieval** — checks if results are weak and automatically retries instead of answering with low-confidence context
-- **Production-ready storage** — SQLite scales to any single repo; architecture is source-agnostic so remote repos are easy to add later
+Key design decisions:
+- No local model inference (learned from earlier project that hit hardware limits)
+- Code-aware chunking preserves meaning better than blind text-splitting
+- Self-correction detects weak results and retries instead of answering poorly
+- Threshold for "weak" result tuned empirically on real test data (0.85 distance)
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Parsing | tree-sitter (Python bindings) |
-| Embeddings | Google Gemini API (`google-genai`) |
-| Storage | SQLite + sqlite-vec |
-| Search | Vector similarity (cosine distance) |
-| MCP Server | Python MCP SDK |
-| Backend API | FastAPI + Uvicorn |
-| Frontend | JavaScript/TypeScript (React planned) |
-| Dev Environment | Python 3.12, venv, GitHub Codespaces |
+- Python 3.12
+- tree-sitter (code parsing)
+- Google Gemini API (embeddings)
+- SQLite + sqlite-vec (storage and vector search)
+- FastAPI (backend)
+- MCP SDK (protocol for AI tools)
 
-## Key Concepts
+## Concepts
 
-**RAG (Retrieval-Augmented Generation)** — Find real data first, then generate answers grounded in it, instead of trusting the AI's general knowledge.
+RAG — finding real data first before generating answers, grounding responses in truth instead of AI memory.
 
-**Embeddings** — Turning text/code into vectors (lists of numbers) where similar meaning = nearby coordinates in vector space. This enables "search by meaning" instead of keyword matching.
+Embeddings — converting text/code to vectors where similar meaning lives close together geometrically. Enables "search by meaning" not just keywords.
 
-**Tree-sitter** — Parser that understands code's real structure (functions, classes) via AST parsing, so chunking respects syntactic boundaries instead of blindly cutting text.
+Tree-sitter — parser that understands code structure (functions, classes) so chunking respects code boundaries instead of slicing randomly.
 
-**Self-correcting RAG** — When search results are weak (even the best match isn't close enough in meaning), automatically rewrite the query and retry instead of answering with poor context.
+Self-correcting retrieval — when top results aren't close enough in meaning (high distance), automatically rewrite the question and retry instead of answering with weak context.
 
-**Vector similarity search** — Finding the closest points in vector space (lowest distance) to find the most semantically related code chunks.
+Vector similarity — finding the closest points in vector space (lowest distance) to locate semantically related code.
 
-## Evaluation Plan
+## Limitations
 
-For the final project report, will measure:
-- **Retrieval precision/recall** — Do searches find the right functions?
-- **Answer faithfulness** — Do answers stick to retrieved context or add hallucinated details?
-- **Self-correction effectiveness** — How often does retry actually improve results?
+- Currently indexes JavaScript/TypeScript only. Other languages require adding tree-sitter grammars (architecture supports this, just not built yet).
+- v1 works on local workspaces. Remote repos are planned for later.
+- Self-correction threshold was tuned on one small repo (Pong game) and may need adjustment for other codebases.
 
-## Known Limitations
+## Next
 
-- **JS/TS only (for now)** — Chunker currently understands JavaScript/TypeScript. Other languages require adding tree-sitter grammars (architecture supports this, just not implemented yet).
-- **Single-repo scope (v1)** — Currently indexes open workspace. Remote repos are a planned Phase 2 addition.
-- **Threshold tuning** — Self-correction threshold (0.85) was picked empirically from real test data on Pong game; may need adjustment for different codebases.
-
-## For Recruiters / Academics
-
-This project demonstrates:
-- **RAG systems in practice** — Not just theory, actual implementation with real tradeoffs
-- **Semantic search** — Embeddings, vector databases, similarity metrics
-- **Production thinking** — Handling concurrency (SQLite threading), API design, deployment considerations
-- **Self-improving systems** — Agents that detect their own errors and retry
-- **Code understanding** — AST parsing, syntactic chunking, language-aware analysis
-- **Full-stack development** — ML pipeline + backend API + client integration (MCP)
-
-
-## Next Steps
-
-1. **Frontend web app** (next session) — Chat UI, displays retrieved chunks + self-correction indicator
-2. **Multi-language support** — Add Python, Java, Go grammars
-3. **Evaluation & report** — Measure retrieval quality, document findings
-4. **Phase 2 (after project)** — Remote repo indexing, UI polish, potential release
+Frontend web chat interface, multi-language support, final evaluation and report.
