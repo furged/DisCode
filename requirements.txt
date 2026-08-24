@@ -1,0 +1,8 @@
+tree-sitter==0.21.3
+tree-sitter-languages==1.10.2
+google-genai==2.17.0
+python-dotenv==1.2.2
+sqlite-vec==0.1.9
+mcp==2.0.0
+fastapi==0.141.1
+uvicorn==0.52.4
