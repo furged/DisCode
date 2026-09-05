@@ -1,13 +1,23 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field, field_validator
 from storage import get_connection
-from retriever import retrieve
+from retriever import retrieve, RetrievalError
 
 app = FastAPI(title="DisCode API")
 
+MAX_QUESTION_LENGTH = 500  # generous for a search question; guards against abuse/accidents
+
 
 class SearchRequest(BaseModel):
-    question: str
+    question: str = Field(..., min_length=1, max_length=MAX_QUESTION_LENGTH)
+
+    @field_validator("question")
+    @classmethod
+    def question_not_blank(cls, value):
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("question can't be empty or just whitespace")
+        return stripped
 
 
 class CodeChunkResult(BaseModel):
@@ -35,7 +45,14 @@ def search(request: SearchRequest) -> SearchResponse:
     # can't be shared across threads, so this is safer than trying to
     # reuse one connection.
     conn = get_connection("codebase.db")
-    outcome = retrieve(conn, request.question, top_k=3)
+    try:
+        outcome = retrieve(conn, request.question, top_k=3)
+    except RetrievalError as e:
+        # The embedding API is down/exhausted retries — tell the client
+        # cleanly instead of leaking a raw 500 + stack trace.
+        raise HTTPException(status_code=503, detail=str(e))
+    finally:
+        conn.close()
 
     results = [CodeChunkResult(**r) for r in outcome["results"]]
 

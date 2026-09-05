@@ -35,13 +35,33 @@ def init_db(conn):
         )
     """)
 
-    conn.execute(f"""
-        CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vectors USING vec0(
-            chunk_id INTEGER PRIMARY KEY,
-            embedding FLOAT[{EMBEDDING_SIZE}]
-        )
-    """)
+    # NOTE: sqlite-vec's virtual table syntax (`FLOAT[N]`) doesn't support
+    # parameterized column definitions the way normal SQL values do, so
+    # EMBEDDING_SIZE has to be interpolated directly rather than passed
+    # as a "?" placeholder. This is safe ONLY because EMBEDDING_SIZE is a
+    # hardcoded int constant defined at the top of this file, not
+    # user-controlled input - if that ever changes, this needs to go
+    # back to being parameterized.
+    conn.execute(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vectors USING vec0("
+        "chunk_id INTEGER PRIMARY KEY, "
+        f"embedding FLOAT[{EMBEDDING_SIZE}])"
+    )
 
+    conn.commit()
+
+
+def clear_chunks(conn):
+    """
+    Wipes all existing chunks/vectors so a re-index replaces the old data
+    instead of stacking on top of it. Without this, running run.py twice
+    on the same repo silently doubles everything in the db (found this
+    the hard way testing the chunker changes - update() showed up twice
+    with identical distances because the old 20-chunk run was never
+    cleared before the new 25-chunk run added its own copies).
+    """
+    conn.execute("DELETE FROM chunk_vectors")
+    conn.execute("DELETE FROM chunks")
     conn.commit()
 
 
@@ -87,7 +107,7 @@ def search_similar_chunks(conn, query_embedding, top_k=5):
     query_json = json.dumps(query_embedding)
 
     rows = conn.execute(
-        f"""
+        """
         SELECT chunks.name, chunks.type, chunks.code, chunks.file_path,
                chunks.start_line, chunks.end_line, chunk_vectors.distance
         FROM chunk_vectors

@@ -2,7 +2,7 @@ import sys
 from walker import walk_repo
 from chunker import chunk_file
 from embedder import embed_chunks
-from storage import get_connection, init_db, save_chunks
+from storage import get_connection, init_db, clear_chunks, save_chunks
 
 
 def main():
@@ -27,6 +27,7 @@ def main():
 
     conn = get_connection("codebase.db")
     init_db(conn)
+    clear_chunks(conn)  # re-indexing should replace, not stack on top of, the last run
     save_chunks(conn, embedded_chunks)
     print(f"Saved {len(embedded_chunks)} chunks to codebase.db")
 

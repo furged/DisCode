@@ -1,11 +1,18 @@
 import os
+from chunker import EXTENSION_TO_LANGUAGE
 
 # Folder names we NEVER want to walk into.
 # These either aren't "your code" (dependencies) or aren't useful for RAG (build output, git internals).
-SKIP_DIRS = {"node_modules", ".git", "dist", "build", ".next", "coverage"}
+SKIP_DIRS = {
+    "node_modules", ".git", "dist", "build", ".next", "coverage",
+    "target", "__pycache__", ".venv", "venv", "vendor", "bin", "obj",
+}
 
-# File types we know how to chunk meaningfully right now.
-SUPPORTED_EXTENSIONS = {".js", ".ts", ".jsx", ".tsx"}
+# File types we know how to chunk meaningfully right now. Derived from
+# chunker.py's EXTENSION_TO_LANGUAGE so this list can never silently
+# drift out of sync with what the chunker actually supports (this used
+# to happen: .ts was "supported" here but parsed with the wrong grammar).
+SUPPORTED_EXTENSIONS = set(EXTENSION_TO_LANGUAGE.keys())
 
 # Anything bigger than this is probably a generated/minified file, not real hand-written code.
 MAX_FILE_SIZE_BYTES = 500_000  # ~500kb
