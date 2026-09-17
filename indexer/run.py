@@ -22,7 +22,7 @@ def main():
 
     print(f"Extracted {len(all_chunks)} code chunks")
 
-    embedded_chunks = embed_chunks(all_chunks)
+    embedded_chunks, failed_chunks = embed_chunks(all_chunks)
     print(f"Embedded {len(embedded_chunks)} chunks successfully")
 
     conn = get_connection("codebase.db")

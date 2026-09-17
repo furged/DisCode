@@ -63,12 +63,17 @@ def embed_chunk(chunk):
     return chunk
 
 
-def embed_chunks(chunks):
+def embed_chunks(chunks, on_progress=None):
     """
     Embeds a whole list of chunks, one at a time.
     Prints progress so we can see it's actually working on a real repo.
     Skips (and reports) any chunk that fails after retries, instead of
     letting one bad chunk abort the whole indexing run.
+
+    on_progress, if given, is called after each chunk attempt (success or
+    fail) as on_progress(processed_count, total_count, chunk_name) - this
+    is what lets the web API report live progress without duplicating this
+    loop; the CLI just doesn't pass one and gets the old print-only behavior.
     """
     embedded = []
     failed = []
@@ -79,9 +84,11 @@ def embed_chunks(chunks):
         except EmbeddingError as e:
             print(f"  Skipping {chunk['name']}: {e}")
             failed.append(chunk["name"])
+        if on_progress:
+            on_progress(i, len(chunks), chunk["name"])
         time.sleep(0.5)  # small pause to be gentle on free-tier rate limits
 
     if failed:
         print(f"\n{len(failed)} chunk(s) failed to embed and were skipped: {', '.join(failed)}")
 
-    return embedded
+    return embedded, failed

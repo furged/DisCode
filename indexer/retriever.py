@@ -72,6 +72,61 @@ Original question: {original_question}"""
         return original_question
 
 
+MAX_CODE_CHARS_PER_CHUNK = 2000  # keep the synthesis prompt from ballooning on huge functions
+
+
+def synthesize_answer(question, results):
+    """
+    Turns raw retrieved code chunks into an actual written answer to the
+    user's question, instead of making them read grep-style output
+    themselves. This is a separate, best-effort step on top of retrieve()
+    - if it fails (LLM outage, etc), the caller should still have the raw
+    results to fall back on, so this never raises: it returns None on
+    failure instead of blowing up a search that otherwise worked fine.
+    """
+    if not results:
+        return None
+
+    context_blocks = []
+    for i, r in enumerate(results, start=1):
+        code = r["code"]
+        if len(code) > MAX_CODE_CHARS_PER_CHUNK:
+            code = code[:MAX_CODE_CHARS_PER_CHUNK] + "\n... (truncated)"
+        context_blocks.append(
+            f"[{i}] {r['type']} {r['name']} ({r['file_path']}:{r['start_line']}-{r['end_line']})\n{code}"
+        )
+
+    prompt = f"""You are explaining a codebase to a developer who just asked a question about it.
+Below are code chunks retrieved via semantic search that are likely relevant.
+Write a short, direct explanation (2-4 sentences) of how the code answers
+their question, referencing specific function/class names. If the
+retrieved code only partially answers it, say so honestly instead of
+guessing at behavior that isn't shown. Do not repeat the raw code back
+verbatim - explain it.
+
+Write in plain prose only - this renders as plain text in a terminal-style
+UI, so do NOT use markdown formatting of any kind: no **bold**, no
+numbered or bulleted lists, no headers, no backtick code spans. Just
+normal sentences, the way you'd explain it out loud to a coworker.
+
+Question: {question}
+
+Retrieved code:
+{chr(10).join(context_blocks)}
+
+Answer:"""
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        return response.text.strip()
+    except genai_errors.APIError as e:
+        print(f"Answer synthesis failed, falling back to raw results only: {e}")
+        return None
+
+
 def retrieve(conn, question, top_k=5):
     """
     Given a plain-text question, finds the most relevant code chunks.
