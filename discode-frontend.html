@@ -27,25 +27,164 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Courier Prime', ui-monospace, monospace;
+    letter-spacing: 0.02em; /* Courier Prime reads dense/heavy at default tracking - this airs it out */
   }
 
   body {
     display: flex;
     flex-direction: column;
     width: 100%;
+    position: relative;
   }
 
-  /* ---------- header ---------- */
+  /* ================= landing screen ================= */
+
+  #landing {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 350ms ease, transform 350ms ease;
+  }
+
+  #landing.dismiss {
+    opacity: 0;
+    transform: scale(0.94);
+    pointer-events: none;
+  }
+
+  #landingInner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    padding: 24px;
+    max-width: 90vw;
+  }
+
+  #landingMascot .mouth { animation: blink 1.4s steps(1) infinite; }
+  @keyframes blink { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
+
+  #landingTitle {
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.03em;
+  }
+  #landingTitle .bracket { color: var(--muted); }
+  #landingTitle .accent { color: var(--teal); }
+
+  #landingSub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: -12px;
+    text-align: center;
+  }
+
+  #landingChoices {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .landing-choice {
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13.5px;
+    padding: 12px 20px;
+    cursor: pointer;
+  }
+
+  .landing-choice:hover { border-color: var(--teal-dim); color: var(--teal); }
+  .landing-choice.selected { border-color: var(--teal); color: var(--teal); background: rgba(63,191,173,0.08); }
+
+  #landingForm {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: min(560px, 90vw);
+  }
+
+  #landingForm.visible { display: flex; }
+
+  #landingFormRow {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  #landingInput {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    outline: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
+    caret-color: var(--teal);
+    min-width: 0;
+  }
+
+  #landingInput:focus { border-color: var(--teal-dim); }
+  #landingInput::placeholder { color: var(--muted); }
+
+  #landingSubmit {
+    background: var(--teal);
+    border: 1px solid var(--teal);
+    color: #06110f;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 10px 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  #landingSubmit:hover:not(:disabled) { background: #56d1c0; }
+  #landingSubmit:disabled { opacity: 0.5; cursor: default; }
+
+  #landingBack {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  #landingBack:hover { color: var(--teal); }
+
+  #landingError {
+    color: var(--yellow);
+    font-size: 12.5px;
+    min-height: 1.2em;
+  }
+
+  /* ================= app shell ================= */
 
   header {
+    display: flex;
+    justify-content: center;
+    border-bottom: 1px solid var(--panel-border);
+    flex-shrink: 0;
+  }
+
+  header .inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
+    width: 100%;
+    max-width: 1400px;
     padding: 16px clamp(16px, 4vw, 48px);
-    border-bottom: 1px solid var(--panel-border);
-    flex-shrink: 0;
   }
 
   header .name {
@@ -55,18 +194,16 @@
     font-weight: 700;
     letter-spacing: 0.02em;
     color: var(--text);
-    font-size: 15px;
+    font-size: 16px;
   }
 
   header .name .bracket { color: var(--muted); }
   header .name .accent { color: var(--teal); }
 
-  #mascot { flex-shrink: 0; }
   #mascot .mouth { animation: blink 1.4s steps(1) infinite; }
-  @keyframes blink { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
 
   #indexedBadge {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--muted);
     border: 1px solid var(--panel-border);
     padding: 3px 10px;
@@ -76,7 +213,7 @@
   #indexedBadge .repo { color: var(--yellow-dim); }
 
   #status {
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--muted);
     display: flex;
     align-items: center;
@@ -92,33 +229,30 @@
     flex-shrink: 0;
   }
 
-  #status.ok .dot {
-    background: var(--teal);
-    box-shadow: 0 0 6px var(--teal);
-  }
-
+  #status.ok .dot { background: var(--teal); box-shadow: 0 0 6px var(--teal); }
   #status.down .dot { background: var(--down); }
-
-  /* ---------- index panel — separate from chat, always visible ---------- */
 
   #indexPanel {
     flex-shrink: 0;
+    display: flex;
+    justify-content: center;
     border-bottom: 1px solid var(--panel-border);
-    padding: 12px clamp(16px, 4vw, 48px);
     background: var(--panel);
   }
 
-  #indexRow {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  #indexPanel .inner {
+    width: 100%;
+    max-width: 1400px;
+    padding: 12px clamp(16px, 4vw, 48px);
   }
 
+  #indexRow { display: flex; align-items: center; gap: 10px; }
+
   #indexRow .label {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--yellow);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     flex-shrink: 0;
   }
 
@@ -129,7 +263,7 @@
     outline: none;
     color: var(--text);
     font-family: inherit;
-    font-size: 13.5px;
+    font-size: 14px;
     padding: 7px 10px;
     caret-color: var(--teal);
     min-width: 0;
@@ -144,7 +278,7 @@
     color: #06110f;
     font-family: inherit;
     font-weight: 700;
-    font-size: 12.5px;
+    font-size: 13px;
     letter-spacing: 0.02em;
     padding: 8px 16px;
     cursor: pointer;
@@ -152,14 +286,10 @@
   }
 
   #indexBtn:hover:not(:disabled) { background: #56d1c0; }
-
-  #indexBtn:disabled {
-    cursor: default;
-    opacity: 0.5;
-  }
+  #indexBtn:disabled { cursor: default; opacity: 0.5; }
 
   #indexStatusLine {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--muted);
     padding-top: 8px;
     min-height: 1.4em;
@@ -167,30 +297,23 @@
 
   #indexStatusLine.error { color: var(--yellow); }
 
-  /* ---------- transcript ---------- */
-
   #transcript {
     flex: 1;
     overflow-y: auto;
     padding: 24px clamp(16px, 4vw, 48px) 16px;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 24px;
-  }
-
-  #transcript:empty::before {
-    content: "> ask a question about the indexed codebase above";
-    color: var(--muted);
-    font-style: italic;
-    display: block;
-    padding-top: 8px;
-    max-width: 1100px;
+    width: 100%;
   }
 
   .turn {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 100%;
+    max-width: 1100px;
     animation: reveal 180ms ease-out;
   }
 
@@ -199,77 +322,34 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .prompt-line {
-    color: var(--text);
-    font-size: 15px;
-    max-width: 1100px;
-  }
+  .prompt-line { color: var(--text); font-size: 16px; }
+  .prompt-line .sigil { color: var(--teal); margin-right: 8px; font-weight: 700; }
 
-  .prompt-line .sigil {
-    color: var(--teal);
-    margin-right: 8px;
-    font-weight: 700;
-  }
-
-  .system-line {
-    display: flex;
-    gap: 8px;
-    align-items: baseline;
-    font-size: 13px;
-    max-width: 1100px;
-  }
-
-  .system-line .tag {
-    color: var(--teal);
-    flex-shrink: 0;
-  }
-
+  .system-line { display: flex; gap: 8px; align-items: baseline; font-size: 14px; }
+  .system-line .tag { color: var(--teal); flex-shrink: 0; }
   .system-line .msg { color: var(--muted); font-style: italic; }
-
   .system-line.error .tag { color: var(--yellow); }
   .system-line.error .msg { color: var(--yellow); font-style: normal; }
 
-  /* the actual synthesized answer — not muted/italic, this is the main content */
-  .answer-line {
-    display: flex;
-    gap: 8px;
-    align-items: baseline;
-    font-size: 14.5px;
-    line-height: 1.6;
-    max-width: 1100px;
-  }
-
+  .answer-line { display: flex; gap: 8px; align-items: baseline; font-size: 15.5px; line-height: 1.65; }
   .answer-line .tag { color: var(--teal); flex-shrink: 0; }
   .answer-line .msg { color: var(--text); white-space: pre-wrap; }
-
-  /* ---------- collapsible code references ---------- */
 
   .refs-toggle summary {
     cursor: pointer;
     color: var(--muted);
-    font-size: 12.5px;
+    font-size: 13.5px;
     list-style: none;
     padding: 4px 0;
-    max-width: 1100px;
   }
-
   .refs-toggle summary::-webkit-details-marker { display: none; }
   .refs-toggle summary .chevron::before { content: "▸ "; color: var(--teal-dim); }
   .refs-toggle[open] summary .chevron::before { content: "▾ "; }
   .refs-toggle summary:hover { color: var(--teal); }
 
-  .results {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-top: 10px;
-  }
+  .results { display: flex; flex-direction: column; gap: 12px; padding-top: 10px; }
 
-  .result {
-    max-width: 1100px;
-    border: 1px solid var(--panel-border);
-    background: var(--panel);
-  }
+  .result { border: 1px solid var(--panel-border); background: var(--panel); }
 
   .result-head {
     display: flex;
@@ -278,68 +358,45 @@
     gap: 12px;
     padding: 8px 12px;
     border-bottom: 1px solid var(--panel-border);
-    font-size: 12.5px;
+    font-size: 13.5px;
     color: var(--muted);
   }
 
   .result-head .loc { color: var(--text); }
-
-  .result-head .loc .type {
-    color: var(--yellow-dim);
-    margin-right: 6px;
-  }
+  .result-head .loc .type { color: var(--yellow-dim); margin-right: 6px; }
 
   .result-body {
     margin: 0;
     padding: 12px;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.55;
     overflow-x: auto;
     white-space: pre;
     color: var(--text);
   }
 
-  .distance-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px 10px;
-    font-size: 11.5px;
-    color: var(--muted);
-  }
-
-  .distance-bar {
-    flex: 1;
-    max-width: 160px;
-    height: 3px;
-    background: var(--panel-border);
-    position: relative;
-  }
-
-  .distance-bar > span {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    background: var(--teal);
-  }
-
+  .distance-row { display: flex; align-items: center; gap: 8px; padding: 6px 12px 10px; font-size: 12.5px; color: var(--muted); }
+  .distance-bar { flex: 1; max-width: 160px; height: 3px; background: var(--panel-border); position: relative; }
+  .distance-bar > span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--teal); }
   .distance-bar.weak > span { background: var(--yellow); }
-
-  /* ---------- input ---------- */
 
   #inputRow {
     flex-shrink: 0;
     display: flex;
+    justify-content: center;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  #inputRow .inner {
+    display: flex;
     align-items: center;
     gap: 10px;
-    border-top: 1px solid var(--panel-border);
+    width: 100%;
+    max-width: 1400px;
     padding: 14px clamp(16px, 4vw, 48px) 18px;
   }
 
-  #inputRow .sigil {
-    color: var(--teal);
-    font-size: 15px;
-    font-weight: 700;
-  }
+  #inputRow .sigil { color: var(--teal); font-size: 16px; font-weight: 700; }
 
   #q {
     flex: 1;
@@ -348,36 +405,29 @@
     outline: none;
     color: var(--text);
     font-family: inherit;
-    font-size: 15px;
+    font-size: 16px;
     caret-color: var(--teal);
   }
-
   #q::placeholder { color: var(--muted); }
 
   #send {
+    flex-shrink: 0;
     background: transparent;
     border: 1px solid var(--panel-border);
     color: var(--muted);
     font-family: inherit;
-    font-size: 13px;
+    font-size: 13.5px;
     padding: 6px 14px;
     cursor: pointer;
   }
-
-  #send:hover:not(:disabled) {
-    border-color: var(--teal-dim);
-    color: var(--teal);
-  }
-
-  #send:disabled {
-    cursor: default;
-    opacity: 0.5;
-  }
+  #send:hover:not(:disabled) { border-color: var(--teal-dim); color: var(--teal); }
+  #send:disabled { cursor: default; opacity: 0.5; }
 
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-thumb { background: var(--panel-border); }
   ::-webkit-scrollbar-track { background: transparent; }
-  /* ---------- syntax highlighting theme (highlight.js classes, custom-mapped to our palette) ---------- */
+
+  /* ================= syntax highlighting (highlight.js classes, custom-mapped) ================= */
   .hljs-comment, .hljs-quote { color: var(--muted); font-style: italic; }
   .hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-subst { color: var(--teal); }
   .hljs-string, .hljs-doctag, .hljs-regexp { color: var(--yellow); }
@@ -388,7 +438,6 @@
   .hljs-tag, .hljs-name { color: var(--teal); }
   .hljs-symbol, .hljs-bullet { color: var(--yellow); }
 
-  /* inline code / emphasis inside synthesized answers */
   .answer-line code.inline-code {
     color: var(--yellow);
     background: rgba(232, 197, 71, 0.08);
@@ -400,9 +449,9 @@
 </head>
 <body>
 
-  <header>
-    <div class="name">
-      <svg id="mascot" width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <div id="landing">
+    <div id="landingInner">
+      <svg id="landingMascot" width="110" height="110" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
         <rect x="6" y="0" width="3" height="4" fill="var(--yellow)"/>
         <rect x="23" y="0" width="3" height="4" fill="var(--yellow)"/>
         <rect x="4" y="4" width="24" height="24" rx="2" fill="#0a0c0b" stroke="var(--teal)" stroke-width="2"/>
@@ -410,27 +459,62 @@
         <rect x="19" y="12" width="4" height="4" fill="var(--yellow)"/>
         <rect class="mouth" x="12" y="20" width="8" height="3" fill="var(--teal)"/>
       </svg>
-      <span class="bracket">[</span><span class="accent">what dis code sayin?</span><span class="bracket">]</span>
+      <div id="landingTitle"><span class="bracket">[</span><span class="accent">what dis code sayin?</span><span class="bracket">]</span></div>
+      <div id="landingSub">index a codebase to start asking it questions</div>
+
+      <div id="landingChoices">
+        <button class="landing-choice" data-mode="local">index a local folder</button>
+        <button class="landing-choice" data-mode="github">index a github repo</button>
+      </div>
+
+      <div id="landingForm">
+        <div id="landingFormRow">
+          <input id="landingInput" type="text" autocomplete="off" />
+          <button id="landingSubmit">index</button>
+        </div>
+        <div id="landingError"></div>
+        <button id="landingBack">back</button>
+      </div>
     </div>
-    <div id="indexedBadge">indexed: <span class="repo" id="indexedBadgeText"></span></div>
-    <div id="status"><span class="dot"></span><span id="statusText">checking backend…</span></div>
+  </div>
+
+  <header>
+    <div class="inner">
+      <div class="name">
+        <svg id="mascot" width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="0" width="3" height="4" fill="var(--yellow)"/>
+          <rect x="23" y="0" width="3" height="4" fill="var(--yellow)"/>
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#0a0c0b" stroke="var(--teal)" stroke-width="2"/>
+          <rect x="9" y="12" width="4" height="4" fill="var(--yellow)"/>
+          <rect x="19" y="12" width="4" height="4" fill="var(--yellow)"/>
+          <rect class="mouth" x="12" y="20" width="8" height="3" fill="var(--teal)"/>
+        </svg>
+        <span class="bracket">[</span><span class="accent">what dis code sayin?</span><span class="bracket">]</span>
+      </div>
+      <div id="indexedBadge">indexed: <span class="repo" id="indexedBadgeText"></span></div>
+      <div id="status"><span class="dot"></span><span id="statusText">checking backend…</span></div>
+    </div>
   </header>
 
   <div id="indexPanel">
-    <div id="indexRow">
-      <span class="label">index</span>
-      <input id="repoInput" type="text" placeholder="local path or github.com/owner/repo" autocomplete="off" />
-      <button id="indexBtn">index</button>
+    <div class="inner">
+      <div id="indexRow">
+        <span class="label">index</span>
+        <input id="repoInput" type="text" placeholder="local path or github.com/owner/repo" autocomplete="off" />
+        <button id="indexBtn">index</button>
+      </div>
+      <div id="indexStatusLine"></div>
     </div>
-    <div id="indexStatusLine"></div>
   </div>
 
   <div id="transcript"></div>
 
   <div id="inputRow">
-    <span class="sigil">&gt;</span>
-    <input id="q" type="text" placeholder="ask a question about the indexed code…" autocomplete="off" />
-    <button id="send">run</button>
+    <div class="inner">
+      <span class="sigil">&gt;</span>
+      <input id="q" type="text" placeholder="ask a question about the indexed code…" autocomplete="off" />
+      <button id="send">run</button>
+    </div>
   </div>
 
 <script>
@@ -448,6 +532,69 @@
   const indexStatusLine = document.getElementById("indexStatusLine");
   const indexedBadge = document.getElementById("indexedBadge");
   const indexedBadgeText = document.getElementById("indexedBadgeText");
+
+  // ---------- landing screen ----------
+
+  const landing = document.getElementById("landing");
+  const landingChoices = document.getElementById("landingChoices");
+  const landingForm = document.getElementById("landingForm");
+  const landingInput = document.getElementById("landingInput");
+  const landingSubmit = document.getElementById("landingSubmit");
+  const landingBack = document.getElementById("landingBack");
+  const landingError = document.getElementById("landingError");
+
+  const LANDING_PLACEHOLDERS = {
+    local: "C:\\path\\to\\your\\repo",
+    github: "github.com/owner/repo",
+  };
+  let landingMode = null;
+
+  function selectLandingMode(mode) {
+    landingMode = mode;
+    landingInput.placeholder = LANDING_PLACEHOLDERS[mode];
+    landingChoices.style.display = "none";
+    landingForm.classList.add("visible");
+    landingError.textContent = "";
+    landingInput.value = "";
+    landingInput.focus();
+  }
+
+  landingChoices.querySelectorAll(".landing-choice").forEach((btn) => {
+    btn.addEventListener("click", () => selectLandingMode(btn.dataset.mode));
+  });
+
+  landingBack.addEventListener("click", () => {
+    landingMode = null;
+    landingForm.classList.remove("visible");
+    landingChoices.style.display = "flex";
+    landingError.textContent = "";
+  });
+
+  function dismissLanding() {
+    landing.classList.add("dismiss");
+    // Wait for the fade/scale transition to finish before fully removing
+    // it from layout - matches the 350ms transition set in CSS. A stray
+    // extra 50ms guards against the transitionend event never firing in
+    // some edge cases (tab backgrounded mid-animation, etc).
+    setTimeout(() => { landing.style.display = "none"; }, 400);
+  }
+
+  async function submitLanding() {
+    const value = landingInput.value.trim();
+    if (!value) {
+      landingError.textContent = "type a path or link first";
+      return;
+    }
+    landingSubmit.disabled = true;
+    repoInput.value = value; // carry it over so the persistent index bar reflects what's running
+    dismissLanding();
+    await startIndexJob(value);
+  }
+
+  landingSubmit.addEventListener("click", submitLanding);
+  landingInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitLanding();
+  });
 
   // ---------- session-only chat history (sessionStorage) ----------
 
@@ -474,14 +621,23 @@
     return div.innerHTML;
   }
 
+  function timeAgo(unixSeconds) {
+    const diffSec = Math.max(0, Math.floor(Date.now() / 1000 - unixSeconds));
+    if (diffSec < 60) return "just now";
+    const min = Math.floor(diffSec / 60);
+    if (min < 60) return `${min} min ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h ago`;
+    return `${Math.floor(hr / 24)}d ago`;
+  }
+
   // Backstop for when the LLM ignores the "no markdown" instruction in
   // the synthesis prompt and answers with **bold**, `code spans`, or
-  // markdown list syntax anyway. Unlike a plain strip, this converts the
-  // syntax into real styled elements (so `resetRound` still reads as
-  // code-like, just via color instead of backticks) - escapes the raw
-  // text FIRST, then only ever injects our own safe wrapper tags on top
-  // of the already-escaped string, so nothing in the model's output can
-  // inject arbitrary HTML.
+  // markdown list syntax anyway. Converts the syntax into real styled
+  // elements instead of just discarding it - escapes the raw text FIRST,
+  // then only ever injects our own safe wrapper tags on top of the
+  // already-escaped string, so nothing in the model's output can inject
+  // arbitrary HTML.
   function formatAnswer(text) {
     let safe = escapeHtml(text);
     safe = safe.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
@@ -505,16 +661,6 @@
   function hljsLanguageFor(filePath) {
     const ext = filePath.split(".").pop().toLowerCase();
     return HLJS_LANGUAGE_MAP[ext] || null;
-  }
-
-  function timeAgo(unixSeconds) {
-    const diffSec = Math.max(0, Math.floor(Date.now() / 1000 - unixSeconds));
-    if (diffSec < 60) return "just now";
-    const min = Math.floor(diffSec / 60);
-    if (min < 60) return `${min} min ago`;
-    const hr = Math.floor(min / 60);
-    if (hr < 24) return `${hr}h ago`;
-    return `${Math.floor(hr / 24)}d ago`;
   }
 
   // ---------- chat rendering ----------
@@ -565,9 +711,6 @@
       wrap.appendChild(note);
     }
 
-    // Code stays collapsed by default when there's a written answer to
-    // read instead; if there's no answer, open it since the raw code IS
-    // the only content we have to show.
     const details = document.createElement("details");
     details.className = "refs-toggle";
     if (!turn.answer) details.open = true;
@@ -604,7 +747,7 @@
     const codeEl = document.createElement("code");
     const lang = hljsLanguageFor(r.file_path);
     if (lang) codeEl.className = `language-${lang}`;
-    codeEl.textContent = r.code; // textContent, not innerHTML - stays safe even before hljs touches it
+    codeEl.textContent = r.code;
     body.appendChild(codeEl);
     card.appendChild(body);
 
@@ -612,8 +755,6 @@
       try { window.hljs.highlightElement(codeEl); } catch { /* worst case, code just shows unhighlighted */ }
     }
 
-    // Distance is roughly 0 (identical) to ~1+ (unrelated); below the
-    // backend's own 0.85 self-correction threshold counts as a "good" match.
     const distRow = document.createElement("div");
     distRow.className = "distance-row";
     const pct = Math.max(0, Math.min(1, 1 - r.distance)) * 100;
@@ -665,8 +806,12 @@
       if (!res.ok) return;
       const info = await res.json();
       applyLastIndexInfo(info);
+      // If something was already indexed from a previous session, skip
+      // the landing screen entirely - it's for first-time setup, not
+      // something a returning user should have to click through again.
+      if (info) dismissLanding();
     } catch {
-      // backend unreachable — checkHealth already reports this, nothing more to do here
+      // backend unreachable — checkHealth already reports this
     }
   }
 
@@ -752,6 +897,7 @@
 
     indexBtn.disabled = false;
     indexBtn.textContent = "index";
+    landingSubmit.disabled = false;
   }
 
   indexBtn.addEventListener("click", () => {
@@ -797,15 +943,23 @@
 
     history.push(turn);
     saveHistory(history);
-    renderAll();
 
-    sendBtn.disabled = false;
-    sendBtn.textContent = "run";
-    input.value = "";
-    input.focus();
+    // finally guarantees the button/input always reset, even if something
+    // inside renderAll() throws (a bad response shape, a rendering bug,
+    // etc) - without this, one bad render could leave the button stuck
+    // disabled and the input never clearing, forever, until reload.
+    try {
+      renderAll();
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = "run";
+      input.value = "";
+      input.focus();
+    }
   }
 
   function submit() {
+    if (sendBtn.disabled) return; // ignore Enter/click spam while a request is in flight
     const value = input.value.trim();
     if (!value) return;
     ask(value);
